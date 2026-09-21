@@ -1,16 +1,22 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { NavBar } from '@/components/NavBar'
+import { Dashboard } from '@/components/Dashboard'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeTab, setActiveTab] = useState('Dashboard')
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Example Page</h1>
-      <Button onClick={() => setCount((value) => value + 1)}>
-        Counter is {count}
-      </Button>
-    </main>
+    <div className="flex min-h-svh flex-col">
+      <NavBar active={activeTab} onChange={setActiveTab} />
+
+      <main className="flex-1 p-4">
+        {activeTab === 'Dashboard' && <Dashboard />}
+        {activeTab === 'Investments' && (
+          <h1 className="text-2xl font-semibold">Investments (placeholder)</h1>
+        )}
+        {activeTab === 'Chat' && <h1 className="text-2xl font-semibold">Chat (placeholder)</h1>}
+      </main>
+    </div>
   )
 }
 
