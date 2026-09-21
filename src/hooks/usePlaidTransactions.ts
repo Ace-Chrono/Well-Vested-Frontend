@@ -1,5 +1,12 @@
 import { useCallback, useState } from 'react'
 
+type Transaction = {
+  date: string
+  name: string
+  category: string
+  amount: number
+}
+
 // Sample data so the UI has something real to render against.
 const MOCK_TRANSACTIONS = [
   { date: '2026-09-16', name: 'Paycheck', category: 'Income', amount: 2140.0 },
@@ -23,7 +30,7 @@ const MOCK_TRANSACTIONS = [
  */
 export function usePlaidTransactions() {
   const [isConnected, setIsConnected] = useState(false)
-  const [transactions, setTransactions] = useState([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
 
   const connect = useCallback(() => {
     // Simulate the delay of the real Link flow + token exchange.
