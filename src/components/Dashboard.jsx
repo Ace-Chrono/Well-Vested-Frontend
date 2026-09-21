@@ -13,49 +13,44 @@ export function Dashboard() {
   const { connect, canConnect, isConnected, transactions } = usePlaidTransactions()
 
   return (
-    <div className="w-full max-w-5xl p-4 pt-2 flex flex-col gap-4">
-      {/* Net worth box */}
-      <div className="rounded-lg border p-4">
-        <p className="text-sm text-muted-foreground">Net worth</p>
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
-          <span className="text-sm text-green-600">
-            +${NET_WORTH.delta.toLocaleString()} this month
-          </span>
-        </div>
+    <div className="w-full max-w-2xl p-6">
+      <p>Net worth</p>
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
+        <span className="text-sm text-green-600">
+          +${NET_WORTH.delta.toLocaleString()} this month
+        </span>
+      </div>
 
-        <div className="mt-3 flex gap-8 border-t pt-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Cash</p>
-            <p className="text-sm">${NET_WORTH.cash.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Investments</p>
-            <p className="text-sm">${NET_WORTH.investments.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Liabilities</p>
-            <p className="text-sm">−${Math.abs(NET_WORTH.liabilities).toLocaleString()}</p>
-          </div>
+      <div className="mt-6 flex gap-8 border-t pt-4">
+        <div>
+          <p>Cash</p>
+          <p className="text-sm">${NET_WORTH.cash.toLocaleString()}</p>
+        </div>
+        <div>
+          <p>Investments</p>
+          <p className="text-sm">${NET_WORTH.investments.toLocaleString()}</p>
+        </div>
+        <div>
+          <p>Liabilities</p>
+          <p className="text-sm">−${Math.abs(NET_WORTH.liabilities).toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Transactions header box */}
-      <div className="rounded-lg border p-4 flex items-center justify-between">
-        <h2 className="font-semibold">Transactions</h2>
-        {!isConnected && (
-          <Button size="sm" onClick={() => connect()} disabled={!canConnect}>
-            Connect your bank
-          </Button>
-        )}
-      </div>
+      <div className="mt-10">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-semibold">Transactions</h2>
+          {!isConnected && (
+            <Button size="sm" onClick={() => connect()} disabled={!canConnect}>
+              Connect your bank
+            </Button>
+          )}
+        </div>
 
-      {/* Big transactions table box */}
-      <div className="rounded-lg border p-4 min-h-[400px]">
         {isConnected ? (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-muted-foreground">
+              <tr className="text-left">
                 <th className="pb-2 font-normal">Date</th>
                 <th className="pb-2 font-normal">Description</th>
                 <th className="pb-2 text-right font-normal">Amount</th>
@@ -81,7 +76,7 @@ export function Dashboard() {
             </tbody>
           </table>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p>
             Connect a bank account to see your recent transactions.
           </p>
         )}

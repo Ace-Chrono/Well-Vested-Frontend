@@ -9,7 +9,7 @@ function App() {
     <div className="flex min-h-svh flex-col">
       <NavBar active={activeTab} onChange={setActiveTab} />
 
-      <main className="flex flex-1 flex-col items-start p-4">
+      <main className="flex-1 p-4">
         {activeTab === 'Dashboard' && <Dashboard />}
         {activeTab === 'Investments' && (
           <h1 className="text-2xl font-semibold">Investments (placeholder)</h1>
