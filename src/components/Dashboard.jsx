@@ -9,44 +9,51 @@ const NET_WORTH = {
   liabilities: -3168,
 }
 
+const BOX = 'rounded-lg border p-4'
+
 export function Dashboard() {
   const { connect, canConnect, isConnected, transactions } = usePlaidTransactions()
 
   return (
-    <div className="w-full max-w-2xl p-6">
-      <p>Net worth</p>
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
-        <span className="text-sm text-green-600">
-          +${NET_WORTH.delta.toLocaleString()} this month
-        </span>
+    <div className="w-full p-4 flex flex-col gap-4">
+      {/* Net worth box */}
+      <div className={BOX}>
+        <p>Net worth</p>
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
+          <span className="text-sm text-green-600">
+            +${NET_WORTH.delta.toLocaleString()} this month
+          </span>
+        </div>
+
+        <div className="mt-3 flex gap-8 border-t pt-3">
+          <div>
+            <p>Cash</p>
+            <p className="text-sm">${NET_WORTH.cash.toLocaleString()}</p>
+          </div>
+          <div>
+            <p>Investments</p>
+            <p className="text-sm">${NET_WORTH.investments.toLocaleString()}</p>
+          </div>
+          <div>
+            <p>Liabilities</p>
+            <p className="text-sm">−${Math.abs(NET_WORTH.liabilities).toLocaleString()}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-6 flex gap-8 border-t pt-4">
-        <div>
-          <p>Cash</p>
-          <p className="text-sm">${NET_WORTH.cash.toLocaleString()}</p>
-        </div>
-        <div>
-          <p>Investments</p>
-          <p className="text-sm">${NET_WORTH.investments.toLocaleString()}</p>
-        </div>
-        <div>
-          <p>Liabilities</p>
-          <p className="text-sm">−${Math.abs(NET_WORTH.liabilities).toLocaleString()}</p>
-        </div>
+      {/* Transactions header box */}
+      <div className={`${BOX} flex items-center justify-between`}>
+        <h2 className="font-semibold">Transactions</h2>
+        {!isConnected && (
+          <Button size="sm" onClick={() => connect()} disabled={!canConnect}>
+            Connect your bank
+          </Button>
+        )}
       </div>
 
-      <div className="mt-10">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Transactions</h2>
-          {!isConnected && (
-            <Button size="sm" onClick={() => connect()} disabled={!canConnect}>
-              Connect your bank
-            </Button>
-          )}
-        </div>
-
+      {/* Big transactions table box */}
+      <div className={BOX}>
         {isConnected ? (
           <table className="w-full text-sm">
             <thead>
@@ -76,9 +83,7 @@ export function Dashboard() {
             </tbody>
           </table>
         ) : (
-          <p>
-            Connect a bank account to see your recent transactions.
-          </p>
+          <p>Connect a bank account to see your recent transactions.</p>
         )}
       </div>
     </div>
