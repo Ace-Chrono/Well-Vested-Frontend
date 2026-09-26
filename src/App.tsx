@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavBar } from '@/components/NavBar'
-import { Dashboard } from '@/components/Dashboard'
+import { Dashboard } from '@/pages/Dashboard'
 import { Investments } from '@/components/Investments'
 
 function App() {
