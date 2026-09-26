@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavBar } from '@/components/NavBar'
-import { Dashboard } from '@/components/Dashboard'
+import { Dashboard } from '@/pages/Dashboard'
+import { Investments } from '@/components/Investments'
 
 function App() {
   const [activeTab, setActiveTab] = useState('Dashboard')
@@ -11,9 +12,7 @@ function App() {
 
       <main className="flex-1 p-4">
         {activeTab === 'Dashboard' && <Dashboard />}
-        {activeTab === 'Investments' && (
-          <h1 className="text-2xl font-semibold">Investments (placeholder)</h1>
-        )}
+        {activeTab === 'Investments' && <Investments />}
         {activeTab === 'Chat' && <h1 className="text-2xl font-semibold">Chat (placeholder)</h1>}
       </main>
     </div>
