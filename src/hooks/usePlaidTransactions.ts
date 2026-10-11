@@ -1,75 +1,92 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 
-const API_BASE = '' // adjust if your backend runs elsewhere
+const API_BASE = ''
+
+export type Transaction = {
+  date: string
+  name: string
+  category?: string
+  amount: number
+}
+
+type TransactionResponse = {
+  date: string
+  name: string
+  merchantName?: string
+  amount: number
+  personalFinanceCategory?: { primary?: string }
+}
+
+function toError(thrown: unknown): Error {
+  return thrown instanceof Error ? thrown : new Error(String(thrown))
+}
 
 export function usePlaidTransactions() {
-  const [linkToken, setLinkToken] = useState(null)
-  const [transactions, setTransactions] = useState([])
+  const [linkToken, setLinkToken] = useState<string | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<Error | null>(null)
 
   const loadTransactions = useCallback(async () => {
     try {
-      // POST /filter with an empty body — confirm this returns "all
-      // transactions" for your TransactionFilterRequestDTO. If it requires
-      // specific fields (e.g. a date range), fill those in here instead of {}.
-      const res = await fetch(`${API_BASE}/api/transactions/filter`, {
+      const response = await fetch(`${API_BASE}/api/transactions/filter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      if (!res.ok) throw new Error(`Failed to load transactions: ${res.status}`)
-      const data = await res.json()
+      if (!response.ok) throw new Error(`Failed to load transactions: ${response.status}`)
+      const transactionResponses: TransactionResponse[] = await response.json()
 
-      // ADJUST THESE FIELD NAMES to match your actual TransactionResponseDTO.
-      const normalized = data.map((tx) => ({
-        date: tx.date,
-        name: tx.merchantName || tx.name,
-        category: tx.personalFinanceCategory?.primary,
-        amount: tx.amount,
+      const normalizedTransactions: Transaction[] = transactionResponses.map((transaction) => ({
+        date: transaction.date,
+        name: transaction.merchantName || transaction.name,
+        category: transaction.personalFinanceCategory?.primary,
+        amount: transaction.amount,
       }))
 
-      setTransactions(normalized)
-      setIsConnected(normalized.length > 0)
-    } catch (err) {
-      setError(err)
+      setTransactions(normalizedTransactions)
+      setIsConnected(normalizedTransactions.length > 0)
+    } catch (thrown) {
+      setError(toError(thrown))
     }
   }, [])
 
   useEffect(() => {
     async function createLinkToken() {
       try {
-        const res = await fetch(`${API_BASE}/api/plaid/link-token`, { method: 'POST' })
-        if (!res.ok) throw new Error(`Failed to create link token: ${res.status}`)
-        const data = await res.json()
+        const response = await fetch(`${API_BASE}/api/plaid/link-token`, { method: 'POST' })
+        if (!response.ok) throw new Error(`Failed to create link token: ${response.status}`)
+        const data: { linkToken: string } = await response.json()
         setLinkToken(data.linkToken)
-      } catch (err) {
-        setError(err)
+      } catch (thrown) {
+        setError(toError(thrown))
       }
     }
     createLinkToken()
     loadTransactions()
   }, [loadTransactions])
 
-  const onSuccess = useCallback(
-    async (publicToken) => {
+    const onSuccess = useCallback(
+    async (publicToken: string | null) => {
+      if (!publicToken) return
       try {
-        // Note: exchange takes publicToken as a query param, not a JSON body.
-        const exchangeRes = await fetch(
+        // The exchange endpoint takes publicToken as a query param, not a JSON body.
+        const exchangeResponse = await fetch(
           `${API_BASE}/api/plaid/exchange?publicToken=${encodeURIComponent(publicToken)}`,
           { method: 'POST' }
         )
-        if (!exchangeRes.ok) throw new Error(`Failed to exchange token: ${exchangeRes.status}`)
+        if (!exchangeResponse.ok) {
+          throw new Error(`Failed to exchange token: ${exchangeResponse.status}`)
+        }
 
-        // Pull fresh transactions from Plaid into the backend's database.
-        const syncRes = await fetch(`${API_BASE}/api/transactions/sync`, { method: 'POST' })
-        if (!syncRes.ok) throw new Error(`Failed to sync transactions: ${syncRes.status}`)
+        const syncResponse = await fetch(`${API_BASE}/api/transactions/sync`, { method: 'POST' })
+        if (!syncResponse.ok) throw new Error(`Failed to sync transactions: ${syncResponse.status}`)
 
         await loadTransactions()
         setIsConnected(true)
-      } catch (err) {
-        setError(err)
+      } catch (thrown) {
+        setError(toError(thrown))
       }
     },
     [loadTransactions]

@@ -1,15 +1,15 @@
-// Stand-in data until the investments backend exists.
-// Shape this to match whatever your real API eventually returns —
-// the components only care about these field names.
+import type { Asset, HeldAsset, PricePoint } from '@/types/investments'
 
-function generateSeries(days, start, volatility) {
-  const series = []
+// Stand-in data until the investments backend exists.
+
+function generateSeries(days: number, start: number, volatility: number): PricePoint[] {
+  const series: PricePoint[] = []
   let value = start
   const today = new Date()
-  for (let i = days; i >= 0; i--) {
+  for (let daysAgo = days; daysAgo >= 0; daysAgo--) {
     value += (Math.random() - 0.48) * volatility
     const date = new Date(today)
-    date.setDate(date.getDate() - i)
+    date.setDate(date.getDate() - daysAgo)
     series.push({
       date: date.toISOString().slice(0, 10),
       value: Math.round(value * 100) / 100,
@@ -18,9 +18,9 @@ function generateSeries(days, start, volatility) {
   return series
 }
 
-export const PORTFOLIO_HISTORY = generateSeries(90, 60000, 400)
+export const PORTFOLIO_HISTORY: PricePoint[] = generateSeries(90, 60000, 400)
 
-export const HOLDINGS = [
+export const HOLDINGS: HeldAsset[] = [
   {
     symbol: 'AAPL',
     name: 'Apple Inc.',
@@ -55,23 +55,8 @@ export const HOLDINGS = [
   },
 ]
 
-// Generates plausible mock data for a symbol the user adds to their
-// watchlist. Swap this out for a real quote-lookup API call later —
-// callers just need back an object with this same shape.
-export function generateMockAsset(symbol) {
-  const start = 50 + Math.random() * 300
-  const dayChange = (Math.random() - 0.5) * 6
-  return {
-    symbol: symbol.toUpperCase(),
-    name: symbol.toUpperCase(),
-    price: Math.round(start * 100) / 100,
-    dayChange: Math.round(dayChange * 100) / 100,
-    priceHistory: generateSeries(90, start, start * 0.03),
-  }
-}
-
-// Same shape as HOLDINGS — "shares" here just means "units held".
-export const CRYPTO_HOLDINGS = [
+// Same shape as HOLDINGS; "shares" here just means "units held".
+export const CRYPTO_HOLDINGS: HeldAsset[] = [
   {
     symbol: 'BTC',
     name: 'Bitcoin',
@@ -97,3 +82,16 @@ export const CRYPTO_HOLDINGS = [
     priceHistory: generateSeries(90, 150, 6),
   },
 ]
+
+// Mock data for a symbol added to the watchlist. Replace with a real quote lookup later.
+export function generateMockAsset(symbol: string): Asset {
+  const startPrice = 50 + Math.random() * 300
+  const dayChange = (Math.random() - 0.5) * 6
+  return {
+    symbol: symbol.toUpperCase(),
+    name: symbol.toUpperCase(),
+    price: Math.round(startPrice * 100) / 100,
+    dayChange: Math.round(dayChange * 100) / 100,
+    priceHistory: generateSeries(90, startPrice, startPrice * 0.03),
+  }
+}

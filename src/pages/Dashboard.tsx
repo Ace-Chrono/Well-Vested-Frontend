@@ -9,24 +9,24 @@ const NET_WORTH = {
   liabilities: -3168,
 }
 
-const BOX = 'rounded-lg border p-4'
-
 export function Dashboard() {
   const { connect, canConnect, isConnected, transactions } = usePlaidTransactions()
 
   return (
     <div className="w-full p-4 flex flex-col gap-4">
       {/* Net worth box */}
-      <div className={BOX}>
-        <p>Net worth</p>
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
-          <span className="text-sm text-green-600">
-            +${NET_WORTH.delta.toLocaleString()} this month
-          </span>
+      <div className="rounded-lg border p-4 flex flex-col gap-4">
+        <div>
+          <p>Net worth</p>
+          <div className="flex items-baseline gap-3">
+            <h1 className="text-4xl font-semibold">${NET_WORTH.total.toLocaleString()}</h1>
+            <span className="text-sm text-green-600">
+              +${NET_WORTH.delta.toLocaleString()} this month
+            </span>
+          </div>
         </div>
 
-        <div className="mt-3 flex gap-8 border-t pt-3">
+        <div className="flex gap-8">
           <div>
             <p>Cash</p>
             <p className="text-sm">${NET_WORTH.cash.toLocaleString()}</p>
@@ -43,7 +43,7 @@ export function Dashboard() {
       </div>
 
       {/* Transactions header box */}
-      <div className={`${BOX} flex items-center justify-between`}>
+      <div className="rounded-lg border p-4 flex items-center justify-between">
         <h2 className="font-semibold">Transactions</h2>
         {!isConnected && (
           <Button size="sm" onClick={() => connect()} disabled={!canConnect}>
@@ -52,8 +52,8 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Big transactions table box */}
-      <div className={BOX}>
+      {/* Transactions table box */}
+      <div className="rounded-lg border p-4">
         {isConnected ? (
           <table className="w-full text-sm">
             <thead>
@@ -64,19 +64,21 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx, i) => (
-                <tr key={i} className="border-t">
-                  <td className="py-2">{tx.date}</td>
+              {transactions.map((transaction, index) => (
+                <tr key={index} className="border-t">
+                  <td className="py-2">{transaction.date}</td>
                   <td className="py-2">
-                    {tx.name}
-                    <span className="block text-xs text-muted-foreground">{tx.category}</span>
+                    {transaction.name}
+                    <span className="block text-xs text-muted-foreground">
+                      {transaction.category}
+                    </span>
                   </td>
                   <td
                     className={`py-2 text-right ${
-                      tx.amount > 0 ? 'text-green-600' : 'text-red-500'
+                      transaction.amount > 0 ? 'text-green-600' : 'text-red-500'
                     }`}
                   >
-                    {tx.amount > 0 ? '+' : '−'}${Math.abs(tx.amount).toFixed(2)}
+                    {transaction.amount > 0 ? '+' : '−'}${Math.abs(transaction.amount).toFixed(2)}
                   </td>
                 </tr>
               ))}
