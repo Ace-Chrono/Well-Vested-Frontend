@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { usePlaidLink } from 'react-plaid-link'
-
-const API_BASE = ''
+import { readSyncFailure, type SyncFailure } from '@/lib/syncErrors'
 
 export type Transaction = {
   date: string
   name: string
   category?: string
+  detailedCategory?: string
   amount: number
 }
 
@@ -15,22 +14,21 @@ type TransactionResponse = {
   name: string
   merchantName?: string
   amount: number
-  personalFinanceCategory?: { primary?: string }
+  personalFinanceCategory?: { primary?: string; primaryCategory?: string; detailed?: string }
 }
 
-function toError(thrown: unknown): Error {
-  return thrown instanceof Error ? thrown : new Error(String(thrown))
-}
+type SyncStatus = 'idle' | 'loading' | 'success' | 'error'
 
 export function usePlaidTransactions() {
-  const [linkToken, setLinkToken] = useState<string | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const [syncFailure, setSyncFailure] = useState<SyncFailure | null>(null)
 
   const loadTransactions = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/transactions/filter`, {
+      const response = await fetch('/api/transactions/filter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -41,67 +39,57 @@ export function usePlaidTransactions() {
       const normalizedTransactions: Transaction[] = transactionResponses.map((transaction) => ({
         date: transaction.date,
         name: transaction.merchantName || transaction.name,
-        category: transaction.personalFinanceCategory?.primary,
+        category:
+          transaction.personalFinanceCategory?.primary ??
+          transaction.personalFinanceCategory?.primaryCategory,
+        detailedCategory: transaction.personalFinanceCategory?.detailed,
         amount: transaction.amount,
       }))
 
       setTransactions(normalizedTransactions)
-      setIsConnected(normalizedTransactions.length > 0)
+      setLoadError(null)
     } catch (thrown) {
-      setError(toError(thrown))
+      setLoadError(thrown instanceof Error ? thrown.message : 'Could not load transactions.')
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    async function createLinkToken() {
-      try {
-        const response = await fetch(`${API_BASE}/api/plaid/link-token`, { method: 'POST' })
-        if (!response.ok) throw new Error(`Failed to create link token: ${response.status}`)
-        const data: { linkToken: string } = await response.json()
-        setLinkToken(data.linkToken)
-      } catch (thrown) {
-        setError(toError(thrown))
-      }
-    }
-    createLinkToken()
+    // Load persisted transactions without treating them as connection status.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTransactions()
   }, [loadTransactions])
 
-    const onSuccess = useCallback(
-    async (publicToken: string | null) => {
-      if (!publicToken) return
-      try {
-        // The exchange endpoint takes publicToken as a query param, not a JSON body.
-        const exchangeResponse = await fetch(
-          `${API_BASE}/api/plaid/exchange?publicToken=${encodeURIComponent(publicToken)}`,
-          { method: 'POST' }
-        )
-        if (!exchangeResponse.ok) {
-          throw new Error(`Failed to exchange token: ${exchangeResponse.status}`)
-        }
-
-        const syncResponse = await fetch(`${API_BASE}/api/transactions/sync`, { method: 'POST' })
-        if (!syncResponse.ok) throw new Error(`Failed to sync transactions: ${syncResponse.status}`)
-
-        await loadTransactions()
-        setIsConnected(true)
-      } catch (thrown) {
-        setError(toError(thrown))
+  const syncTransactions = useCallback(async () => {
+    setSyncStatus('loading')
+    setSyncFailure(null)
+    try {
+      const response = await fetch('/api/transactions/sync', { method: 'POST' })
+      if (!response.ok) {
+        const failure = await readSyncFailure(response)
+        setSyncFailure(failure)
+        setSyncStatus('error')
+        return
       }
-    },
-    [loadTransactions]
-  )
-
-  const { open, ready } = usePlaidLink({
-    token: linkToken,
-    onSuccess,
-  })
+      setSyncStatus('success')
+      await loadTransactions()
+    } catch (thrown) {
+      setSyncFailure({
+        kind: 'error',
+        message: thrown instanceof Error ? `Transaction sync failed: ${thrown.message}` : 'Transaction sync failed.',
+      })
+      setSyncStatus('error')
+    }
+  }, [loadTransactions])
 
   return {
-    connect: open,
-    canConnect: ready,
-    isConnected,
     transactions,
-    error,
+    isLoading,
+    loadError,
+    syncStatus,
+    syncFailure,
+    syncTransactions,
+    reloadTransactions: loadTransactions,
   }
 }
